@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráficas LFA Reader</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            margin-bottom: 40px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h2>Gráficas en Tiempo Real - LFA Reader</h2>
+
+    <div class="chart-container">
+        <canvas id="rgbChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="luxChart"></canvas>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDb0MNZx7DZM_u9fz9VYad5EptkVdnK2YQ",
+            authDomain: "lfar-cb399.firebaseapp.com",
+            databaseURL: "https://lfar-cb399-default-rtdb.firebaseio.com",
+            projectId: "lfar-cb399",
+            storageBucket: "lfar-cb399.appspot.com",
+            messagingSenderId: "140652099318",
+            appId: "1:140652099318:web:c1f4342562b05398e51ed7",
+            measurementId: "G-77T2SHFNPG"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database().ref("Lecturas");
+
+        const labels = [];
+        const redData = [];
+        const greenData = [];
+        const blueData = [];
+        const luxData = [];
+
+        const rgbCtx = document.getElementById('rgbChart').getContext('2d');
+        const luxCtx = document.getElementById('luxChart').getContext('2d');
+
+        const rgbChart = new Chart(rgbCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Red',
+                        data: redData,
+                        borderColor: 'red',
+                        fill: false
+                    },
+                    {
+                        label: 'Green',
+                        data: greenData,
+                        borderColor: 'green',
+                        fill: false
+                    },
+                    {
+                        label: 'Blue',
+                        data: blueData,
+                        borderColor: 'blue',
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'top' } },
+                scales: { x: { display: true }, y: { beginAtZero: true } }
+            }
+        });
+
+        const luxChart = new Chart(luxCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'LUX',
+                        data: luxData,
+                        borderColor: '#D4AD00',
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'top' } },
+                scales: { x: { display: true }, y: { beginAtZero: true } }
+            }
+        });
+
+        database.on("child_added", function(snapshot) {
+            const data = snapshot.val();
+            const label = data.timestamp || new Date().toLocaleTimeString();
+
+            labels.push(label);
+            redData.push(Number(data.R));
+            greenData.push(Number(data.G));
+            blueData.push(Number(data.B));
+            luxData.push(Number(data.Lux));
+
+            // Mantener solo los últimos 20 datos para no saturar
+            if (labels.length > 20) {
+                labels.shift();
+                redData.shift();
+                greenData.shift();
+                blueData.shift();
+                luxData.shift();
+            }
+
+            rgbChart.update();
+            luxChart.update();
+        });
+    </script>
+</body>
+</html>
+    
