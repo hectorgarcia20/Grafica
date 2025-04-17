@@ -2,42 +2,37 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gráficas LFA Reader</title>
+    <title>LFA Reader - Gráficas</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            margin: 0;
-            padding: 20px;
+            margin: 20px;
         }
-        .chart-container {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            margin-bottom: 40px;
+        canvas {
+            margin-top: 30px;
         }
-        h2 {
-            text-align: center;
-            color: #333;
+        #fileInput {
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <h2>Gráficas en Tiempo Real - LFA Reader</h2>
 
-    <div class="chart-container">
-        <canvas id="rgbChart"></canvas>
-    </div>
-    <div class="chart-container">
-        <canvas id="luxChart"></canvas>
-    </div>
+    <h1>LFA Reader - Visualización de Datos</h1>
+
+    <!-- Subir archivo .txt -->
+    <input type="file" id="fileInput" accept=".txt">
+    <button onclick="loadFromFile()">Cargar desde Bloc de Notas</button>
+
+    <!-- Gráficas -->
+    <canvas id="chartRGB" width="600" height="300"></canvas>
+    <canvas id="chartLux" width="600" height="300"></canvas>
 
     <script>
+        // 🔥 Configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDb0MNZx7DZM_u9fz9VYad5EptkVdnK2YQ",
             authDomain: "lfar-cb399.firebaseapp.com",
@@ -45,96 +40,103 @@
             projectId: "lfar-cb399",
             storageBucket: "lfar-cb399.appspot.com",
             messagingSenderId: "140652099318",
-            appId: "1:140652099318:web:c1f4342562b05398e51ed7",
-            measurementId: "G-77T2SHFNPG"
+            appId: "1:140652099318:web:c1f4342562b05398e51ed7"
         };
         firebase.initializeApp(firebaseConfig);
-        const database = firebase.database().ref("Lecturas");
+        const database = firebase.database();
 
+        // 📊 Datos para gráficas
         const labels = [];
-        const redData = [];
-        const greenData = [];
-        const blueData = [];
-        const luxData = [];
+        const dataR = [], dataG = [], dataB = [], dataLux = [];
 
-        const rgbCtx = document.getElementById('rgbChart').getContext('2d');
-        const luxCtx = document.getElementById('luxChart').getContext('2d');
-
-        const rgbChart = new Chart(rgbCtx, {
+        // 🎨 Gráfica RGB
+        const rgbChart = new Chart(document.getElementById('chartRGB').getContext('2d'), {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [
-                    {
-                        label: 'Red',
-                        data: redData,
-                        borderColor: 'red',
-                        fill: false
-                    },
-                    {
-                        label: 'Green',
-                        data: greenData,
-                        borderColor: 'green',
-                        fill: false
-                    },
-                    {
-                        label: 'Blue',
-                        data: blueData,
-                        borderColor: 'blue',
-                        fill: false
-                    }
+                    { label: 'Rojo', data: dataR, borderColor: 'red', fill: false },
+                    { label: 'Verde', data: dataG, borderColor: 'green', fill: false },
+                    { label: 'Azul', data: dataB, borderColor: 'blue', fill: false }
                 ]
             },
             options: {
                 responsive: true,
-                plugins: { legend: { position: 'top' } },
-                scales: { x: { display: true }, y: { beginAtZero: true } }
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Componentes RGB en Tiempo Real'
+                    }
+                }
             }
         });
 
-        const luxChart = new Chart(luxCtx, {
+        // 💡 Gráfica de Lux
+        const luxChart = new Chart(document.getElementById('chartLux').getContext('2d'), {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [
-                    {
-                        label: 'LUX',
-                        data: luxData,
-                        borderColor: '#D4AD00',
-                        fill: false
-                    }
+                    { label: 'Lux', data: dataLux, borderColor: 'orange', fill: false }
                 ]
             },
             options: {
                 responsive: true,
-                plugins: { legend: { position: 'top' } },
-                scales: { x: { display: true }, y: { beginAtZero: true } }
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Intensidad de Luz (Lux) en Tiempo Real'
+                    }
+                }
             }
         });
 
-        database.on("child_added", function(snapshot) {
-            const data = snapshot.val();
-            const label = data.timestamp || new Date().toLocaleTimeString();
-
-            labels.push(label);
-            redData.push(Number(data.R));
-            greenData.push(Number(data.G));
-            blueData.push(Number(data.B));
-            luxData.push(Number(data.Lux));
-
-            // Mantener solo los últimos 20 datos para no saturar
+        // 🧠 Función para actualizar datos
+        function updateCharts(timestamp, R, G, B, Lux) {
             if (labels.length > 20) {
                 labels.shift();
-                redData.shift();
-                greenData.shift();
-                blueData.shift();
-                luxData.shift();
+                dataR.shift();
+                dataG.shift();
+                dataB.shift();
+                dataLux.shift();
             }
-
+            labels.push(timestamp);
+            dataR.push(Number(R));
+            dataG.push(Number(G));
+            dataB.push(Number(B));
+            dataLux.push(Number(Lux));
             rgbChart.update();
             luxChart.update();
+        }
+
+        // 🔁 Escuchar cambios nuevos en Firebase
+        firebase.database().ref("Lecturas").on('child_added', snapshot => {
+            const data = snapshot.val();
+            if (data.timestamp && data.R && data.G && data.B && data.Lux) {
+                updateCharts(data.timestamp, data.R, data.G, data.B, data.Lux);
+            }
         });
+
+        // 📂 Cargar archivo .txt desde el usuario
+        function loadFromFile() {
+            const file = document.getElementById("fileInput").files[0];
+            if (!file) return alert("Selecciona un archivo .txt primero");
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const lines = event.target.result.split('\n');
+                lines.forEach(line => {
+                    const regex = /\[(.*?)\] R:(\d+), G:(\d+), B:(\d+), Lux:(\d+), Color:(\w+)/;
+                    const match = line.match(regex);
+                    if (match) {
+                        const [_, timestamp, R, G, B, Lux] = match;
+                        updateCharts(timestamp, R, G, B, Lux);
+                    }
+                });
+            };
+            reader.readAsText(file);
+        }
     </script>
+
 </body>
 </html>
-    
