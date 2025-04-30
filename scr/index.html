@@ -47,7 +47,7 @@
         const data = lines.slice(1).map((line, index) => {
           const values = line.split("\t");
           return {
-            index,
+            time: index, // aquí el tiempo es simulado como 0, 1, 2...
             FC: parseFloat(values[0]),
             VS: parseFloat(values[1]),
             PA: values[2],
@@ -59,11 +59,11 @@
           };
         });
 
-        const gcData = data.map(d => ({ x: d.index, y: (d.FC * d.VS) / 1000 }));
+        const gcData = data.map(d => ({ x: d.time, y: (d.FC * d.VS) / 1000 }));
         const fsData = data.map(d => {
           const radius = d.Diam / 2 / 10; // cm
           const area = Math.PI * radius * radius; // cm^2
-          return { x: d.index, y: d.Vel * area }; // ml/s
+          return { x: d.time, y: d.Vel * area }; // ml/s
         });
 
         new Chart(document.getElementById('gcChart').getContext('2d'), {
@@ -72,7 +72,10 @@
             datasets: [{ label: 'Gasto Cardíaco (L/min)', data: gcData, borderColor: 'blue', fill: false }]
           },
           options: {
-            scales: { x: { title: { display: true, text: 'Muestra' } }, y: { title: { display: true, text: 'GC (L/min)' } } }
+            scales: {
+              x: { title: { display: true, text: 'Tiempo (s)' } },
+              y: { title: { display: true, text: 'GC (L/min)' } }
+            }
           }
         });
 
@@ -82,7 +85,10 @@
             datasets: [{ label: 'Flujo Sanguíneo (ml/s)', data: fsData, borderColor: 'green', fill: false }]
           },
           options: {
-            scales: { x: { title: { display: true, text: 'Muestra' } }, y: { title: { display: true, text: 'FS (ml/s)' } } }
+            scales: {
+              x: { title: { display: true, text: 'Tiempo (s)' } },
+              y: { title: { display: true, text: 'FS (ml/s)' } }
+            }
           }
         });
 
