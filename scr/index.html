@@ -35,6 +35,29 @@
   </table>
 
   <script>
+    function generarFormaFisica(datos, tipo) {
+      const resultado = [];
+      const muestrasPorSegundo = 20;
+      const duracion = 1; // 1 segundo por muestra original
+      let t = 0;
+
+      datos.forEach((d, i) => {
+        for (let j = 0; j < muestrasPorSegundo; j++) {
+          const tiempo = i + j / muestrasPorSegundo;
+          let valor;
+          if (tipo === 'GC') {
+            valor = ((d.FC * d.VS) / 1000) * (1 + 0.02 * Math.sin(2 * Math.PI * j / muestrasPorSegundo));
+          } else if (tipo === 'FS') {
+            const radius = d.Diam / 2 / 10; // cm
+            const area = Math.PI * radius * radius; // cm^2
+            valor = d.Vel * area * (1 + 0.6 * Math.sin(2 * Math.PI * j / muestrasPorSegundo));
+          }
+          resultado.push({ x: tiempo, y: valor });
+        }
+      });
+      return resultado;
+    }
+
     document.getElementById('fileInput').addEventListener('change', function(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -47,7 +70,7 @@
         const data = lines.slice(1).map((line, index) => {
           const values = line.split("\t");
           return {
-            time: index, // aquí el tiempo es simulado como 0, 1, 2...
+            time: index,
             FC: parseFloat(values[0]),
             VS: parseFloat(values[1]),
             PA: values[2],
@@ -59,19 +82,16 @@
           };
         });
 
-        const gcData = data.map(d => ({ x: d.time, y: (d.FC * d.VS) / 1000 }));
-        const fsData = data.map(d => {
-          const radius = d.Diam / 2 / 10; // cm
-          const area = Math.PI * radius * radius; // cm^2
-          return { x: d.time, y: d.Vel * area }; // ml/s
-        });
+        const gcData = generarFormaFisica(data, 'GC');
+        const fsData = generarFormaFisica(data, 'FS');
 
         new Chart(document.getElementById('gcChart').getContext('2d'), {
           type: 'line',
           data: {
-            datasets: [{ label: 'Gasto Cardíaco (L/min)', data: gcData, borderColor: 'blue', fill: false }]
+            datasets: [{ label: 'Gasto Cardíaco (L/min)', data: gcData, borderColor: 'blue', fill: false, pointRadius: 0 }]
           },
           options: {
+            animation: false,
             scales: {
               x: { title: { display: true, text: 'Tiempo (s)' } },
               y: { title: { display: true, text: 'GC (L/min)' } }
@@ -82,9 +102,10 @@
         new Chart(document.getElementById('fsChart').getContext('2d'), {
           type: 'line',
           data: {
-            datasets: [{ label: 'Flujo Sanguíneo (ml/s)', data: fsData, borderColor: 'green', fill: false }]
+            datasets: [{ label: 'Flujo Sanguíneo (ml/s)', data: fsData, borderColor: 'green', fill: false, pointRadius: 0 }]
           },
           options: {
+            animation: false,
             scales: {
               x: { title: { display: true, text: 'Tiempo (s)' } },
               y: { title: { display: true, text: 'FS (ml/s)' } }
@@ -92,7 +113,6 @@
           }
         });
 
-        // Renderizar tabla de datos
         const tableHeader = document.getElementById("tableHeader");
         const tableBody = document.getElementById("tableBody");
         tableHeader.innerHTML = "";
