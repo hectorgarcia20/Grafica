@@ -1,142 +1,116 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>LFA Reader - Gráficas</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        canvas {
-            margin-top: 30px;
-        }
-        #fileInput {
-            margin-top: 20px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visualizador de GC y FS</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    table {
+      margin-top: 20px;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
 </head>
 <body>
+  <h1>Visualizador de GC y FS</h1>
+  <input type="file" id="fileInput" accept=".txt" />
+  <canvas id="gcChart" width="600" height="300"></canvas>
+  <canvas id="fsChart" width="600" height="300"></canvas>
 
-    <h1>LFA Reader - Visualización de Datos</h1>
+  <table id="dataTable">
+    <thead>
+      <tr id="tableHeader"></tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
 
-    <!-- Subir archivo .txt -->
-    <input type="file" id="fileInput" accept=".txt">
-    <button onclick="loadFromFile()">Cargar desde Bloc de Notas</button>
+  <script>
+    document.getElementById('fileInput').addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
 
-    <!-- Gráficas -->
-    <canvas id="chartRGB" width="600" height="300"></canvas>
-    <canvas id="chartLux" width="600" height="300"></canvas>
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const lines = e.target.result.split("\n").filter(line => line.trim() !== "");
+        const headers = lines[0].split("\t");
 
-    <script>
-        // 🔥 Configuración de Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyDb0MNZx7DZM_u9fz9VYad5EptkVdnK2YQ",
-            authDomain: "lfar-cb399.firebaseapp.com",
-            databaseURL: "https://lfar-cb399-default-rtdb.firebaseio.com",
-            projectId: "lfar-cb399",
-            storageBucket: "lfar-cb399.appspot.com",
-            messagingSenderId: "140652099318",
-            appId: "1:140652099318:web:c1f4342562b05398e51ed7"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
-        // 📊 Datos para gráficas
-        const labels = [];
-        const dataR = [], dataG = [], dataB = [], dataLux = [];
-
-        // 🎨 Gráfica RGB
-        const rgbChart = new Chart(document.getElementById('chartRGB').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'Rojo', data: dataR, borderColor: 'red', fill: false },
-                    { label: 'Verde', data: dataG, borderColor: 'green', fill: false },
-                    { label: 'Azul', data: dataB, borderColor: 'blue', fill: false }
-                ]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Componentes RGB en Tiempo Real'
-                    }
-                }
-            }
+        const data = lines.slice(1).map((line, index) => {
+          const values = line.split("\t");
+          return {
+            index,
+            FC: parseFloat(values[0]),
+            VS: parseFloat(values[1]),
+            PA: values[2],
+            RVS: parseFloat(values[3]),
+            SpO2: parseInt(values[4]),
+            PVC: parseFloat(values[5]),
+            Diam: parseFloat(values[6]),
+            Vel: parseFloat(values[7])
+          };
         });
 
-        // 💡 Gráfica de Lux
-        const luxChart = new Chart(document.getElementById('chartLux').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'Lux', data: dataLux, borderColor: 'orange', fill: false }
-                ]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Intensidad de Luz (Lux) en Tiempo Real'
-                    }
-                }
-            }
+        const gcData = data.map(d => ({ x: d.index, y: (d.FC * d.VS) / 1000 }));
+        const fsData = data.map(d => {
+          const radius = d.Diam / 2 / 10; // cm
+          const area = Math.PI * radius * radius; // cm^2
+          return { x: d.index, y: d.Vel * area }; // ml/s
         });
 
-        // 🧠 Función para actualizar datos
-        function updateCharts(timestamp, R, G, B, Lux) {
-            if (labels.length > 20) {
-                labels.shift();
-                dataR.shift();
-                dataG.shift();
-                dataB.shift();
-                dataLux.shift();
-            }
-            labels.push(timestamp);
-            dataR.push(Number(R));
-            dataG.push(Number(G));
-            dataB.push(Number(B));
-            dataLux.push(Number(Lux));
-            rgbChart.update();
-            luxChart.update();
-        }
-
-        // 🔁 Escuchar cambios nuevos en Firebase
-        firebase.database().ref("Lecturas").on('child_added', snapshot => {
-            const data = snapshot.val();
-            if (data.timestamp && data.R && data.G && data.B && data.Lux) {
-                updateCharts(data.timestamp, data.R, data.G, data.B, data.Lux);
-            }
+        new Chart(document.getElementById('gcChart').getContext('2d'), {
+          type: 'line',
+          data: {
+            datasets: [{ label: 'Gasto Cardíaco (L/min)', data: gcData, borderColor: 'blue', fill: false }]
+          },
+          options: {
+            scales: { x: { title: { display: true, text: 'Muestra' } }, y: { title: { display: true, text: 'GC (L/min)' } } }
+          }
         });
 
-        // 📂 Cargar archivo .txt desde el usuario
-        function loadFromFile() {
-            const file = document.getElementById("fileInput").files[0];
-            if (!file) return alert("Selecciona un archivo .txt primero");
+        new Chart(document.getElementById('fsChart').getContext('2d'), {
+          type: 'line',
+          data: {
+            datasets: [{ label: 'Flujo Sanguíneo (ml/s)', data: fsData, borderColor: 'green', fill: false }]
+          },
+          options: {
+            scales: { x: { title: { display: true, text: 'Muestra' } }, y: { title: { display: true, text: 'FS (ml/s)' } } }
+          }
+        });
 
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const lines = event.target.result.split('\n');
-                lines.forEach(line => {
-                    const regex = /\[(.*?)\] R:(\d+), G:(\d+), B:(\d+), Lux:(\d+), Color:(\w+)/;
-                    const match = line.match(regex);
-                    if (match) {
-                        const [_, timestamp, R, G, B, Lux] = match;
-                        updateCharts(timestamp, R, G, B, Lux);
-                    }
-                });
-            };
-            reader.readAsText(file);
-        }
-    </script>
+        // Renderizar tabla de datos
+        const tableHeader = document.getElementById("tableHeader");
+        const tableBody = document.getElementById("tableBody");
+        tableHeader.innerHTML = "";
+        tableBody.innerHTML = "";
 
+        headers.forEach(header => {
+          const th = document.createElement("th");
+          th.textContent = header;
+          tableHeader.appendChild(th);
+        });
+
+        data.forEach(d => {
+          const tr = document.createElement("tr");
+          const values = [d.FC, d.VS, d.PA, d.RVS, d.SpO2, d.PVC, d.Diam, d.Vel];
+          values.forEach(val => {
+            const td = document.createElement("td");
+            td.textContent = val;
+            tr.appendChild(td);
+          });
+          tableBody.appendChild(tr);
+        });
+      };
+      reader.readAsText(file);
+    });
+  </script>
 </body>
 </html>
