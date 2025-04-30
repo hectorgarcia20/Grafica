@@ -30,7 +30,7 @@
           <h2 class="text-xl font-semibold mb-2">Resultados en Tiempo Real</h2>
           <p><strong>Gasto Cardíaco:</strong> <span id="gc">-</span> L/min</p>
           <p><strong>Presión Arterial:</strong> <span id="pa">-</span> mmHg (estimada)</p>
-          <p><strong>Flujo Sanguíneo:</strong> <span id="flujo">-</span> ml/s</p>
+          <p><strong>Flujo Sanguíneo: (calculado desde el gasto cardíaco) flujo = (gc * 1000) / 60 es una estimación global del flujo circulatorio. </strong> <span id="flujo">-</span> ml/s</p>
         </div>
       </div>
     </div>
@@ -112,8 +112,8 @@
           x: tiempo, y: FS, type: 'scatter', mode: 'lines+markers',
           line: { color: 'red' }, name: 'FS (L/min)'
         }], {
-          title: 'Evolución del Flujo Sanguíneo en el Tiempo',
-          xaxis: { title: 'Tiempo (s)' }, yaxis: { title: 'Flujo Sanguíneo (L/min)' }
+          title: 'Evolución del Flujo Sanguíneo (flujo local en una arteria o vaso específico) en el Tiempo',
+          xaxis: { title: 'Tiempo (s) π*(diam/2)² * vel ' }, yaxis: { title: 'Flujo Sanguíneo (L/min)' }
         });
       };
       reader.readAsText(file);
