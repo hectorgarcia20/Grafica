@@ -1,140 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Visualizador de GC y FS</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <title>Visualización de Gasto Cardíaco y Flujo Sanguíneo</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <style>
-    table {
-      margin-top: 20px;
-      border-collapse: collapse;
-      width: 100%;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background-color: #f2f2f2;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h2 { text-align: center; }
+    #contenedor { max-width: 900px; margin: auto; }
+    input[type="file"] { margin: 20px auto; display: block; }
   </style>
 </head>
 <body>
-  <h1>Visualizador de GC y FS</h1>
-  <input type="file" id="fileInput" accept=".txt" />
-  <canvas id="gcChart" width="600" height="300"></canvas>
-  <canvas id="fsChart" width="600" height="300"></canvas>
-
-  <table id="dataTable">
-    <thead>
-      <tr id="tableHeader"></tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-  </table>
+  <div id="contenedor">
+    <h2>Visualización de Gasto Cardíaco y Flujo Sanguíneo</h2>
+    <input type="file" id="fileInput" accept=".txt" />
+    
+    <div id="grafica-gc" style="height: 400px;"></div>
+    <div id="grafica-fs" style="height: 400px;"></div>
+  </div>
 
   <script>
-    function generarFormaFisica(datos, tipo) {
-      const resultado = [];
-      const muestrasPorSegundo = 20;
-      const duracion = 1; // 1 segundo por muestra original
-      let t = 0;
-
-      datos.forEach((d, i) => {
-        for (let j = 0; j < muestrasPorSegundo; j++) {
-          const tiempo = i + j / muestrasPorSegundo;
-          let valor;
-          if (tipo === 'GC') {
-            valor = ((d.FC * d.VS) / 1000) * (1 + 0.02 * Math.sin(2 * Math.PI * j / muestrasPorSegundo));
-          } else if (tipo === 'FS') {
-            const radius = d.Diam / 2 / 10; // cm
-            const area = Math.PI * radius * radius; // cm^2
-            valor = d.Vel * area * (1 + 0.6 * Math.sin(2 * Math.PI * j / muestrasPorSegundo));
-          }
-          resultado.push({ x: tiempo, y: valor });
-        }
-      });
-      return resultado;
-    }
-
-    document.getElementById('fileInput').addEventListener('change', function(event) {
-      const file = event.target.files[0];
+    document.getElementById('fileInput').addEventListener('change', function (e) {
+      const file = e.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = function(e) {
-        const lines = e.target.result.split("\n").filter(line => line.trim() !== "");
-        const headers = lines[0].split("\t");
+      reader.onload = function (event) {
+        const lines = event.target.result.trim().split('\n');
+        const data = [];
 
-        const data = lines.slice(1).map((line, index) => {
-          const values = line.split("\t");
-          return {
-            time: index,
-            FC: parseFloat(values[0]),
-            VS: parseFloat(values[1]),
-            PA: values[2],
-            RVS: parseFloat(values[3]),
-            SpO2: parseInt(values[4]),
-            PVC: parseFloat(values[5]),
-            Diam: parseFloat(values[6]),
-            Vel: parseFloat(values[7])
-          };
-        });
-
-        const gcData = generarFormaFisica(data, 'GC');
-        const fsData = generarFormaFisica(data, 'FS');
-
-        new Chart(document.getElementById('gcChart').getContext('2d'), {
-          type: 'line',
-          data: {
-            datasets: [{ label: 'Gasto Cardíaco (L/min)', data: gcData, borderColor: 'blue', fill: false, pointRadius: 0 }]
-          },
-          options: {
-            animation: false,
-            scales: {
-              x: { title: { display: true, text: 'Tiempo (s)' } },
-              y: { title: { display: true, text: 'GC (L/min)' } }
-            }
+        for (let i = 1; i < lines.length; i++) { // saltar cabecera
+          const cols = lines[i].split(/\s+/);
+          const FC = parseFloat(cols[0]);
+          const VS = parseFloat(cols[1]);
+          const Diam = parseFloat(cols[6]);
+          const Vel = parseFloat(cols[7]);
+          if (!isNaN(FC) && !isNaN(VS) && !isNaN(Diam) && !isNaN(Vel)) {
+            data.push({ FC, VS, Diam, Vel });
           }
+        }
+
+        const tiempo = data.map((_, i) => i); // 1 segundo por muestra
+        const GC = data.map(d => (d.FC * d.VS) / 1000);
+        const FS = data.map(d => Math.PI * Math.pow(d.Diam / 2, 2) * d.Vel * 60);
+
+        Plotly.newPlot('grafica-gc', [{
+          x: tiempo,
+          y: GC,
+          type: 'scatter',
+          mode: 'lines+markers',
+          line: { color: 'blue' },
+          name: 'GC (L/min)'
+        }], {
+          title: 'Evolución del Gasto Cardíaco en el Tiempo',
+          xaxis: { title: 'Tiempo (s)' },
+          yaxis: { title: 'Gasto Cardíaco (L/min)' }
         });
 
-        new Chart(document.getElementById('fsChart').getContext('2d'), {
-          type: 'line',
-          data: {
-            datasets: [{ label: 'Flujo Sanguíneo (ml/s)', data: fsData, borderColor: 'green', fill: false, pointRadius: 0 }]
-          },
-          options: {
-            animation: false,
-            scales: {
-              x: { title: { display: true, text: 'Tiempo (s)' } },
-              y: { title: { display: true, text: 'FS (ml/s)' } }
-            }
-          }
-        });
-
-        const tableHeader = document.getElementById("tableHeader");
-        const tableBody = document.getElementById("tableBody");
-        tableHeader.innerHTML = "";
-        tableBody.innerHTML = "";
-
-        headers.forEach(header => {
-          const th = document.createElement("th");
-          th.textContent = header;
-          tableHeader.appendChild(th);
-        });
-
-        data.forEach(d => {
-          const tr = document.createElement("tr");
-          const values = [d.FC, d.VS, d.PA, d.RVS, d.SpO2, d.PVC, d.Diam, d.Vel];
-          values.forEach(val => {
-            const td = document.createElement("td");
-            td.textContent = val;
-            tr.appendChild(td);
-          });
-          tableBody.appendChild(tr);
+        Plotly.newPlot('grafica-fs', [{
+          x: tiempo,
+          y: FS,
+          type: 'scatter',
+          mode: 'lines+markers',
+          line: { color: 'red' },
+          name: 'FS (L/min)'
+        }], {
+          title: 'Evolución del Flujo Sanguíneo en el Tiempo',
+          xaxis: { title: 'Tiempo (s)' },
+          yaxis: { title: 'Flujo Sanguíneo (L/min)' }
         });
       };
+
       reader.readAsText(file);
     });
   </script>
