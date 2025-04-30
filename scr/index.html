@@ -56,20 +56,22 @@
   </div>
 
   <script>
+    let diametroActual;
+ // valor por defecto
+
     function calcular() {
       const fc = parseFloat(document.getElementById("fc").value);
       const vs = parseFloat(document.getElementById("vs").value);
       const rvs = parseFloat(document.getElementById("rvs").value);
-      const dp = parseFloat(document.getElementById("dp").value); // mmHg
-      const long = parseFloat(document.getElementById("long").value); // cm
-      const visc = parseFloat(document.getElementById("visc").value); // cP
+      const dp = parseFloat(document.getElementById("dp").value);
+      const long = parseFloat(document.getElementById("long").value);
+      const visc = parseFloat(document.getElementById("visc").value);
 
       const gc = (fc * vs) / 1000; // L/min
       const pa = gc * rvs;
 
-      const diam = 0.5; // ejemplo: 0.5 cm de diámetro
-      const r = diam / 2;
-      const flujo = (dp * Math.PI * Math.pow(r, 4)) / (8 * long * visc) * 1333; // en ml/s
+      const r = diametroActual / 2;
+      const flujo = (dp * Math.PI * Math.pow(r, 4)) / (8 * long * visc) * 1333;
 
       document.getElementById("gc").textContent = gc.toFixed(2);
       document.getElementById("pa").textContent = pa.toFixed(1);
@@ -102,7 +104,7 @@
               <td class="border p-1">${Diam}</td>
               <td class="border p-1">${Vel}</td>
               <td class="border p-1 text-center">
-                <button onclick="usarEnCalculadora(${FC}, ${VS})" class="text-blue-600 hover:underline">→</button>
+                <button onclick="usarEnCalculadora(${FC}, ${VS}, ${Diam})" class="text-blue-600 hover:underline">→</button>
               </td>
             </tr>`;
           }
@@ -117,7 +119,7 @@
           const dp = 100;
           const long = 10;
           const eta = 0.035;
-          return (dp * Math.PI * Math.pow(r, 4)) / (8 * long * eta) * 1333 / 1000; // en ml/s a L/min
+          return (dp * Math.PI * Math.pow(r, 4)) / (8 * long * eta) * 1333 / 1000; // en L/min
         });
 
         Plotly.newPlot('grafica-gc', [{
@@ -139,9 +141,10 @@
       reader.readAsText(file);
     });
 
-    function usarEnCalculadora(fc, vs) {
+    function usarEnCalculadora(fc, vs, diam) {
       document.getElementById("fc").value = fc;
       document.getElementById("vs").value = vs;
+      diametroActual = diam;
       calcular();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
