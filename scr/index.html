@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -70,25 +69,37 @@
       if (!file) return;
       const reader = new FileReader();
       reader.onload = function (event) {
-        const lines = event.target.result.trim().split('\n');
+        const lines = event.target.result.trim().split('\\n');
         const data = [];
-        let tablaHTML = '<table class="table-auto w-full text-sm border"><thead><tr><th class="border p-1">#</th><th class="border p-1">FC</th><th class="border p-1">VS</th><th class="border p-1">Diam</th><th class="border p-1">Vel</th><th class="border p-1">Usar</th></tr></thead><tbody>';
+        let tablaHTML = '<table class="table-auto w-full text-sm border"><thead><tr>' +
+          '<th class="border p-1">#</th><th class="border p-1">FC</th><th class="border p-1">VS</th>' +
+          '<th class="border p-1">PA</th><th class="border p-1">RVS</th><th class="border p-1">SpO2</th>' +
+          '<th class="border p-1">PVC</th><th class="border p-1">Diam</th><th class="border p-1">Vel</th>' +
+          '<th class="border p-1">Usar</th></tr></thead><tbody>';
         for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split(/\s+/);
+          const cols = lines[i].split(/\\s+/);
           const FC = parseFloat(cols[0]);
           const VS = parseFloat(cols[1]);
+          const PA = cols[2];
+          const RVS = parseFloat(cols[3]);
+          const SpO2 = parseFloat(cols[4]);
+          const PVC = parseFloat(cols[5]);
           const Diam = parseFloat(cols[6]);
           const Vel = parseFloat(cols[7]);
           if (!isNaN(FC) && !isNaN(VS) && !isNaN(Diam) && !isNaN(Vel)) {
-            data.push({ FC, VS, Diam, Vel });
+            data.push({ FC, VS, PA, RVS, SpO2, PVC, Diam, Vel });
             tablaHTML += `<tr>
               <td class="border p-1">${i}</td>
               <td class="border p-1">${FC}</td>
               <td class="border p-1">${VS}</td>
+              <td class="border p-1">${PA}</td>
+              <td class="border p-1">${RVS}</td>
+              <td class="border p-1">${SpO2}</td>
+              <td class="border p-1">${PVC}</td>
               <td class="border p-1">${Diam}</td>
               <td class="border p-1">${Vel}</td>
               <td class="border p-1 text-center">
-                <button onclick="usarEnCalculadora(${FC}, ${VS})" class="text-blue-600 hover:underline">→</button>
+                <button onclick="usarEnCalculadora(${FC}, ${VS}, ${RVS})" class="text-blue-600 hover:underline">→</button>
               </td>
             </tr>`;
           }
@@ -119,9 +130,10 @@
       reader.readAsText(file);
     });
 
-    function usarEnCalculadora(fc, vs) {
+    function usarEnCalculadora(fc, vs, rvs) {
       document.getElementById("fc").value = fc;
       document.getElementById("vs").value = vs;
+      document.getElementById("rvs").value = rvs;
       calcular();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
