@@ -7,147 +7,166 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
-<body class="bg-gray-100 text-gray-900 p-6">
+<body class="bg-gradient-to-br from-blue-50 via-white to-purple-100 text-gray-900 p-6">
   <div class="max-w-6xl mx-auto space-y-12">
 
-    <!-- Calculadora -->
-    <div class="bg-white p-8 rounded-xl shadow-xl">
-      <h1 class="text-2xl font-bold mb-4">Diseño de Algoritmo - Gasto Cardíaco y Flujo Sanguíneo</h1>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label class="block font-medium mb-1">Frecuencia Cardíaca (lat/min)</label>
-          <input type="number" id="fc" class="w-full p-2 border rounded" value="75">
-          <label class="block font-medium mt-4 mb-1">Volumen Sistólico (ml/latido)</label>
-          <input type="number" id="vs" class="w-full p-2 border rounded" value="70">
-          <label class="block font-medium mt-4 mb-1">Resistencia Vascular Periférica (mmHg·min/L)</label>
-          <input type="number" id="rvs" class="w-full p-2 border rounded" value="18">
-          <label class="block font-medium mt-4 mb-1">Diferencia de Presión (mmHg)</label>
-          <input type="number" id="dp" class="w-full p-2 border rounded" value="100">
-          <label class="block font-medium mt-4 mb-1">Longitud del vaso (cm)</label>
-          <input type="number" id="long" class="w-full p-2 border rounded" value="10">
-          <label class="block font-medium mt-4 mb-1">Viscosidad (cP)</label>
-          <input type="number" id="visc" class="w-full p-2 border rounded" value="0.035">
-
-          <button onclick="calcular()" class="mt-6 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-            Calcular
-          </button>
+    <!-- Encabezado e integrantes -->
+    <div class="text-center">
+      <h1 class="text-4xl font-extrabold text-blue-700 mb-2">Monitor Cardiovascular</h1>
+      <p class="text-lg text-gray-600 mb-6">Diseño de Algoritmo para Gasto Cardíaco y Flujo Sanguíneo</p>
+      <div class="flex flex-wrap justify-center gap-8">
+        <div class="text-center">
+          <img src="/fotos/hector.jpeg" class="w-24 h-24 rounded-full mx-auto border-4 border-blue-300 shadow-md"/>
+          <p class="mt-2 font-semibold text-blue-800">Hector</p>
         </div>
-        <div>
-          <h2 class="text-xl font-semibold mb-2">Resultados en Tiempo Real</h2>
-          <p><strong>Gasto Cardíaco:</strong> <span id="gc">-</span> L/min</p>
-          <p><strong>Presión Arterial:</strong> <span id="pa">-</span> mmHg (estimada)</p>
-          <p><strong>Flujo Sanguíneo:</strong> <span id="flujo">-</span> ml/s</p>
+        <div class="text-center">
+          <img src="/fotos/anne.jpeg" class="w-24 h-24 rounded-full mx-auto border-4 border-pink-300 shadow-md"/>
+          <p class="mt-2 font-semibold text-pink-800">Anne</p>
+        </div>
+        <div class="text-center">
+          <img src="/fotos/alisa.jpeg" class="w-24 h-24 rounded-full mx-auto border-4 border-green-300 shadow-md"/>
+          <p class="mt-2 font-semibold text-green-800">Alissa</p>
+        </div>
+        <div class="text-center">
+          <img src="/fotos/antonella.jpeg" class="w-24 h-24 rounded-full mx-auto border-4 border-purple-300 shadow-md"/>
+          <p class="mt-2 font-semibold text-purple-800">Antonella</p>
+        </div>
+        <div class="text-center">
+          <img src="/fotos/ricardo.jpeg" class="w-24 h-24 rounded-full mx-auto border-4 border-yellow-300 shadow-md"/>
+          <p class="mt-2 font-semibold text-yellow-800">Ricardo Churampi</p>
         </div>
       </div>
     </div>
 
-    <!-- Carga de archivo y tabla -->
+    <!-- Calculadora -->
     <div class="bg-white p-8 rounded-xl shadow-xl">
-      <h2 class="text-xl font-semibold mb-4">Carga de archivo de datos</h2>
-      <input type="file" id="fileInput" accept=".txt" class="mb-4"/>
-
-      <h3 class="font-semibold mt-4 mb-2">Tabla de Datos (clic para usar en la calculadora)</h3>
-      <div id="tabla-datos" class="overflow-auto max-h-96 mb-8 border rounded"></div>
-
-      <div id="grafica-gc" class="mb-8" style="height: 400px;"></div>
-      <div id="grafica-fs" style="height: 400px;"></div>
+        <h1 class="text-2xl font-bold mb-4">Diseño de Algoritmo - Gasto Cardíaco y Flujo Sanguíneo</h1>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block font-medium mb-1">Frecuencia Cardíaca (lat/min)</label>
+            <input type="number" id="fc" class="w-full p-2 border rounded" value="75">
+            <label class="block font-medium mt-4 mb-1">Volumen Sistólico (ml/latido)</label>
+            <input type="number" id="vs" class="w-full p-2 border rounded" value="70">
+            <label class="block font-medium mt-4 mb-1">Diferencia de Presión (mmHg)</label>
+            <input type="number" id="dp" class="w-full p-2 border rounded" value="100">
+            <label class="block font-medium mt-4 mb-1">Longitud del vaso (cm)</label>
+            <input type="number" id="long" class="w-full p-2 border rounded" value="10">
+            <label class="block font-medium mt-4 mb-1">Viscosidad (cP)</label>
+            <input type="number" id="visc" class="w-full p-2 border rounded" value="0.035">
+  
+            <button onclick="calcular()" class="mt-6 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+              Calcular
+            </button>
+          </div>
+          <div>
+            <h2 class="text-xl font-semibold mb-2">Resultados en Tiempo Real</h2>
+            <p><strong>Gasto Cardíaco:</strong> <span id="gc">-</span> L/min</p>
+            <p><strong>Flujo Sanguíneo:</strong> <span id="flujo">-</span> ml/s</p>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Carga de archivo y tabla -->
+      <div class="bg-white p-8 rounded-xl shadow-xl">
+        <h2 class="text-xl font-semibold mb-4">Carga de archivo de datos</h2>
+        <input type="file" id="fileInput" accept=".txt" class="mb-4"/>
+  
+        <h3 class="font-semibold mt-4 mb-2">Tabla de Datos (clic para usar en la calculadora)</h3>
+        <div id="tabla-datos" class="overflow-auto max-h-96 mb-8 border rounded"></div>
+  
+        <div id="grafica-gc" class="mb-8" style="height: 400px;"></div>
+        <div id="grafica-fs" style="height: 400px;"></div>
+      </div>
+  
     </div>
+  
+    <script>
+      let diametroActual;
 
-  </div>
+      function calcular() {
+        const fc = parseFloat(document.getElementById("fc").value);
+        const vs = parseFloat(document.getElementById("vs").value);
+        const dp = parseFloat(document.getElementById("dp").value);
+        const long = parseFloat(document.getElementById("long").value);
+        const visc = parseFloat(document.getElementById("visc").value);
 
-  <script>
-    let diametroActual;
- // valor por defecto
+        const gc = (fc * vs) / 1000; // L/min
+        const r = diametroActual / 2;
+        const flujo = (dp * Math.PI * Math.pow(r, 4)) / (8 * long * visc) * 1333;
 
-    function calcular() {
-      const fc = parseFloat(document.getElementById("fc").value);
-      const vs = parseFloat(document.getElementById("vs").value);
-      const rvs = parseFloat(document.getElementById("rvs").value);
-      const dp = parseFloat(document.getElementById("dp").value);
-      const long = parseFloat(document.getElementById("long").value);
-      const visc = parseFloat(document.getElementById("visc").value);
+        document.getElementById("gc").textContent = gc.toFixed(2);
+        document.getElementById("flujo").textContent = flujo.toFixed(1);
+      }
 
-      const gc = (fc * vs) / 1000; // L/min
-      const pa = gc * rvs;
-
-      const r = diametroActual / 2;
-      const flujo = (dp * Math.PI * Math.pow(r, 4)) / (8 * long * visc) * 1333;
-
-      document.getElementById("gc").textContent = gc.toFixed(2);
-      document.getElementById("pa").textContent = pa.toFixed(1);
-      document.getElementById("flujo").textContent = flujo.toFixed(1);
-    }
-
-    calcular();
-    setInterval(calcular, 5000);
-
-    document.getElementById('fileInput').addEventListener('change', function (e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function (event) {
-        const lines = event.target.result.trim().split('\n');
-        const data = [];
-        let tablaHTML = '<table class="table-auto w-full text-sm border"><thead><tr><th class="border p-1">#</th><th class="border p-1">FC</th><th class="border p-1">VS</th><th class="border p-1">Diam</th><th class="border p-1">Vel</th><th class="border p-1">Usar</th></tr></thead><tbody>';
-        for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split(/\s+/);
-          const FC = parseFloat(cols[0]);
-          const VS = parseFloat(cols[1]);
-          const Diam = parseFloat(cols[6]);
-          const Vel = parseFloat(cols[7]);
-          if (!isNaN(FC) && !isNaN(VS) && !isNaN(Diam) && !isNaN(Vel)) {
-            data.push({ FC, VS, Diam, Vel });
-            tablaHTML += `<tr>
-              <td class="border p-1">${i}</td>
-              <td class="border p-1">${FC}</td>
-              <td class="border p-1">${VS}</td>
-              <td class="border p-1">${Diam}</td>
-              <td class="border p-1">${Vel}</td>
-              <td class="border p-1 text-center">
-                <button onclick="usarEnCalculadora(${FC}, ${VS}, ${Diam})" class="text-blue-600 hover:underline">→</button>
-              </td>
-            </tr>`;
-          }
-        }
-        tablaHTML += '</tbody></table>';
-        document.getElementById("tabla-datos").innerHTML = tablaHTML;
-
-        const tiempo = data.map((_, i) => i);
-        const GC = data.map(d => (d.FC * d.VS) / 1000);
-        const FS = data.map(d => {
-          const r = d.Diam / 2;
-          const dp = 100;
-          const long = 10;
-          const eta = 0.035;
-          return (dp * Math.PI * Math.pow(r, 4)) / (8 * long * eta) * 1333 / 1000; // en L/min
-        });
-
-        Plotly.newPlot('grafica-gc', [{
-          x: tiempo, y: GC, type: 'scatter', mode: 'lines+markers',
-          line: { color: 'blue' }, name: 'GC (L/min)'
-        }], {
-          title: 'Evolución del Gasto Cardíaco en el Tiempo',
-          xaxis: { title: 'Tiempo (s)' }, yaxis: { title: 'Gasto Cardíaco (L/min)' }
-        });
-
-        Plotly.newPlot('grafica-fs', [{
-          x: tiempo, y: FS, type: 'scatter', mode: 'lines+markers',
-          line: { color: 'red' }, name: 'FS (L/min)'
-        }], {
-          title: 'Evolución del Flujo Sanguíneo en el Tiempo',
-          xaxis: { title: 'Tiempo (s)' }, yaxis: { title: 'Flujo Sanguíneo (L/min)' }
-        });
-      };
-      reader.readAsText(file);
-    });
-
-    function usarEnCalculadora(fc, vs, diam) {
-      document.getElementById("fc").value = fc;
-      document.getElementById("vs").value = vs;
-      diametroActual = diam;
       calcular();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  </script>
-</body>
-</html>
+      setInterval(calcular, 5000);
+
+      document.getElementById('fileInput').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          const lines = event.target.result.trim().split('\n');
+          const data = [];
+          let tablaHTML = '<table class="table-auto w-full text-sm border"><thead><tr><th class="border p-1">#</th><th class="border p-1">FC</th><th class="border p-1">VS</th><th class="border p-1">Diam</th><th class="border p-1">Poner a la calculadora</th><Usar</th></tr></thead><tbody>';
+          for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(/\s+/);
+            const FC = parseFloat(cols[0]);
+            const VS = parseFloat(cols[1]);
+            const Diam = parseFloat(cols[6]);
+            
+            if (!isNaN(FC) && !isNaN(VS) && !isNaN(Diam)) {
+        data.push({ FC, VS, Diam });
+        tablaHTML += `<tr>
+          <td class="border p-1">${i}</td>
+          <td class="border p-1">${FC}</td>
+          <td class="border p-1">${VS}</td>
+          <td class="border p-1">${Diam}</td>
+          <td class="border p-1 text-center">
+            <button onclick="usarEnCalculadora(${FC}, ${VS}, ${Diam})" class="text-blue-600 hover:underline">→</button>
+          </td>
+        </tr>`;
+            }
+          }
+          tablaHTML += '</tbody></table>';
+          document.getElementById("tabla-datos").innerHTML = tablaHTML;
+
+          const tiempo = data.map((_, i) => i);
+          const GC = data.map(d => (d.FC * d.VS) / 1000);
+          const FS = data.map(d => {
+            const r = d.Diam / 2;
+            const dp = 100;
+            const long = 10;
+            const eta = 0.035;
+            return (dp * Math.PI * Math.pow(r, 4)) / (8 * long * eta) * 1333 / 1000;
+          });
+
+          Plotly.newPlot('grafica-gc', [{
+            x: tiempo, y: GC, type: 'scatter', mode: 'lines+markers',
+            line: { color: 'blue' }, name: 'GC (L/min)'
+          }], {
+            title: 'Evolución del Gasto Cardíaco en el Tiempo',
+            xaxis: { title: 'Tiempo (s)' }, yaxis: { title: 'Gasto Cardíaco (L/min)' }
+          });
+
+          Plotly.newPlot('grafica-fs', [{
+            x: tiempo, y: FS, type: 'scatter', mode: 'lines+markers',
+            line: { color: 'red' }, name: 'FS (L/min)'
+          }], {
+            title: 'Evolución del Flujo Sanguíneo en el Tiempo',
+            xaxis: { title: 'Tiempo (s)' }, yaxis: { title: 'Flujo Sanguíneo (L/min)' }
+          });
+        };
+        reader.readAsText(file);
+      });
+
+      function usarEnCalculadora(fc, vs, diam) {
+        document.getElementById("fc").value = fc;
+        document.getElementById("vs").value = vs;
+        diametroActual = diam;
+        calcular();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    </script>
+  </body>
+  </html>
